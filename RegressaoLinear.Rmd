@@ -1,0 +1,220 @@
+---
+title: "Trabalho MQAAE"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2023-09-13"
+---
+<h1> Explicação do DataSet </h1>
+<p>A terapia musical, ou TM, é a utilização da música para aprimorar o estresse, o humor e a saúde mental de um indivíduo de forma geral. A TM é também reconhecida como uma prática baseada em evidências, utilizando a música como um catalisador para hormônios "felizes", como a ocitocina.</p>
+<p>No entanto, a TM emprega uma ampla gama de diferentes gêneros musicais, variando de uma organização para outra. </p>
+<p>O conjunto de dados tem como objetivo identificar quaisquer correlações que possam existir entre o gosto musical de um indivíduo e sua autopercepção de saúde mental. Idealmente, essas descobertas poderiam contribuir para uma aplicação mais informada da TM ou simplesmente fornecer informações interessantes sobre a mente.
+Escolhemos um DataSet que continha dados relacionando músicas com doenças mentais.</p>
+
+As variáveis que o data set trazia eram as seguintes:
+
+<ul>
+  <li> Idade </li>
+  <li> Streaming </li>
+  <li> Horas por dia </li>
+  <li> Enquanto trabalha </li>
+  <li> Instrumentalista </li>
+  <li> Compositor </li>
+  <li> Gênero Favorito </li>
+  <li> Lingua Estrangeira </li>
+  <li> BPM </li>
+  <li> Frequência de cada gênero </li>
+  <li> Ansiedade, Depressão, Insônia e OCD </li>
+  <li> Efeito da Música </li>
+</ul>
+
+<p>Com o intuito de dar um maior foco em apenas algumas variáveis do data set, buscamos pesquisas sobre o assunto.</p>
+<p>Descobrimos uma pesquisa que estabeleceu uma relação entre doenças mentais e a intensidade da música, argumentando que músicas intensas podem afetar a saúde mental. Decidimos investigar essa pesquisa para avaliar se podemos corroborar ou refutar essa hipótese de acordo com a análise do nosso data set.</p>
+Pesquisa: Psychology of Music
+
+<h1> Regressão Linear </h1>
+
+Com esse propósito, procedemos à realização de uma análise de regressão linear, que estabelece uma correlação entre o BPM (Batimentos por Minuto) da composição musical (denotando sua velocidade rítmica) e o nível de ansiedade observado nos entrevistados.
+ 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(readxl)
+library(ggplot2)
+library(lmtest)
+library(performance)
+dataset <- read_excel("trabMQA.xlsx")
+
+```
+Incialmente, confeccionamos um gráfico de dispersão com o intuito de obter uma representação visual da relação existente entre essas duas variáveis.
+
+```{r}
+
+ggplot(dataset, aes(x = BPM, y = Anxiety)) +
+  geom_point() +
+  labs(x = "BPM da Musica", y = "Nivel de Ansiedade") +
+  ggtitle("Grafico de Dispersao: BPM da Musica vs. Nivel de Ansiedade")
+```
+<p>A despeito de termos observado que o gráfico não exibia uma relação de regressão característica, optamos por proceder com a análise de regressão a fim de examinar os dados gerados pelo software R e determinar se devemos rejeitar ou aceitar a hipótese nula.</p>
+
+```{r}
+modelo <- lm(Anxiety ~ BPM, data = dataset)
+ggplot(dataset, aes(x = BPM, y = Anxiety)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(x = "BPM da Musica", y = "Nivel de Ansiedade") +
+  ggtitle("Regressao Linear: BPM da Musica vs. Nivel de Ansiedade")
+ 
+```
+
+<p>O gráfico evidencia que, ainda que se observe uma discreta inclinação que insinua uma possível correlação entre o aumento do BPM e um acréscimo no nível de ansiedade, tal tendência não parece apresentar uma robustez significativa.</p>
+<p>Os dados produzidos pelo software R possibilitam uma análise mais abrangente da regressão e da potencialidade de rejeitar a mesma.</p>
+
+```{r}
+summary(modelo)
+```
+Dentre os dados gerados, destaca-se:
+<ul>
+  <li>R-quadrado : O valor baixo do r-quadrado infere que o modelo não se ajusta aos dados do dataSet, ou seja, não aparenta ser útil usar a regressão Linear. A explicação do nível de ansiedade é 0,1% devido ao BPM  </li>
+  <li>F : Também com valor baixo, o F indica que o BPM da música, ou seja, sua intensidade, não aparenta ser uma variável que explica o nível de ansiedade.</li>
+  <li>Estimate BPM : Consideramos que a cada subida de 1 nível de ansiedade, o BPM sobe 0,0035.   
+</ul>
+
+<h3> Conclusão Primária </h3>
+<p>Em resumo, os resultados da regressão linear <b>não fortalecem a tese de que a variável independente "BPM" tem um efeito significativo na variável dependente</b>. O valor p alto e o R-quadrado muito baixo sugerem que a relação entre "BPM" e a variável dependente <b>não é estatisticamente significativa </b>e que o modelo não está ajustando bem os dados.</p>
+<p>Contudo, ainda é necessário analisar os resíduos da regressão</p>
+
+<h2>Analisando os resíduos</h2>
+<p>Primeiro vamos investigar o teste Breusch-Pagan para heterocedasticidade em um modelo de regressão.</p>
+<p>A heterocedasticidade ocorre quando a variabilidade dos erros de um modelo de regressão não é constante em relação às variáveis independentes, ou seja, serve para identificar se variabilidade dos erros é diferente em situações diferentes.</p>
+```{r}
+
+# analise exploratoria e modelo ajustado
+resultado <- bptest(modelo)
+print(resultado)
+
+```
+<p>O p-valor obtido no teste Breusch-Pagan foi de 0.43, o que é <b>relativamente alto, maior que 0,05. Isso sugere que não há evidências estatisticamente significativas de heterocedasticidade no modelo.</b> Portanto, com base nos dados e no teste realizado, parece que a variabilidade dos erros não varia de forma sistemática com a variável "BPM". Em resumo, os resultados sugerem que a relação entre "BPM" e o "nível de ansiedade" pode ser considerada estável em termos de variabilidade dos erros.</p>
+<p>Além desse teste, faz-se necessário avaliar outros fatores relacionados à análise de resíduos da regressão linear simples, plotados abaixo: </p>
+
+```{r}
+par(mfrow=c(2,2 ))
+plot(modelo)
+```
+<ul>
+<h3>Residuals vs Fitted (Resíduos vs Valores previsto)</h3>
+<li>Objetivo: Verificar se há lineariedade, ou seja, se a relação entre as variáveis é de fato linear. Se a linha do gráfico estiver horizontal,  então temos uma relação linear.</li>
+<li>   Interpretação: Início levemente mais alto indica que para valores mais baixos da previsão, os resíduos são maiores. Contudo, no geral, a linha é linear, indicando que em uma faixa intermediária de valores ajustados, os resíduos estão próximos de zero.</li>
+
+<h3>QQ-Residuals</h3>
+<li>Objetivo: Verificar se os resíduos observados tem distribuição normal, que seria o esperado de uma distribuição teórica. Caso apresente distribuição nortmal, resíduos devem ficar em cima da linha pontilhada.</li>
+<li>Interpretação: Como os resíduos seguem, em maior tempo, em cima da linha, podemos dizer que na maioria das faixas de valores os resíduos não apresentam desvios significativos de normalidade. O fim tombado a direita indica possível valores de outliers.
+</li>
+<h3>Homogenety of Variance</h3>
+<li>Objetivo: Verificar homocedasticidade da variânica.</li>
+<li>interpretação: Como já observado no teste de Breusch-Pagan, o gráfico demonstra que a distribuição de variância está homogênea, uma vez que a linha aparenta estar horizontal.</li>
+
+<h3>Influential Observations</h3>
+<li>Objetivo: Ver se há outliers e se existem pontos de alavancagem. A presença de outliers pode ser confirmada se existir resíduos acima de 3 e abaixo de -3. Valores influentes (pontos de alavancagem) são os pontos fora da linha pontilhada, eles influenciam na estimação de modelo</p>
+<li>interpretação: Apesar de não possuirmos outliers fora da faixa, o caso #2 e #3 preocupam por potencialmente estarem piorando a análise da regressão linear já que são valores influentes.</li>
+
+<h2> Breve análise sem valores influentes </h2>
+<p>Devido a última análise de resíduos do gráfico Influential Observations, ficou evidente que alguns casos se tratavam de valores influentes, ou seja, valores que influenciavam negativamente a regressão Linear. Por isso, fez se necessário retirá-los do data set e analisá-lo novamente. <p>
+<p><b>Regressão sem valores influentes</b></p>
+```{r}
+dataset2 <- read_excel("trabMQA2.xlsx")
+modelo <- lm(Anxiety ~ BPM, data = dataset2)
+summary(modelo)
+```
+<p><b>Resíduos sem valores influentes</b></p>
+```{r}
+par(mfrow=c(2,2 ))
+plot(modelo)
+```
+<p>Depois da mudança, houve uma melhora nos valores de r e f, além de termos corrigido o único problema explícito na análise de resíduo. No final, r e f continuaram apresentando um valor abaixo do esperado, apesar de termos uma resposta satisfatória dos resíduos.<p>
+<h3>Conclusão Final </h3>
+
+<p>A interpretação dessa situação depende do contexto e dos objetivos da análise:</p>
+<p>Se o objetivo principal for fazer previsões precisas, mesmo que o modelo não explique bem a variação, ele pode ser útil.</p>
+<p>Se o baixo R-quadrado e a baixa estatística F forem problemáticos e o modelo não atender às necessidades da análise, pode ser necessário explorar outros modelos ou variáveis.</p>
+<p>Ou seja, apesar do modelo possuir certa eficiencia na previsão, ele não comprova que a variável independente "BPM" influencie diretamente na variável dependente "Nível de Ansiedade", recusando, a princípio, uma suposta conexão entre os dois</p>
+
+<h1>Tabela ANOVA </h1>
+
+<p>Além da análise por Regressão Linear, também buscamos realizar uma análise estatística por meio da tabela ANOVA (Análise de Variância) para investigar a possível relação entre os gêneros musicais mais consumidos e os efeitos da música sobre a ansiedade dos ouvintes, afim de comprovar ou rejeitar a hipótese da pesquisa. Nesse contexto, os gêneros musicais são considerados variáveis qualitativas, enquanto o nível de melhora na ansiedade é categorizado de forma quantitativa.</p>
+ 
+<p><b>Observação:</b></p>
+ 
+<p>Para realizarmos a análise de modo simplificado, atribuímos o valor 0 para indicar "piora na ansiedade", 1 para "sem relação" e 2 para "melhora no estado de ansiedade".</p>
+ 
+```{r}
+# Separando as colunas necessárias
+ 
+Gender <- dataset$`Fav genre`
+MusicEfects <- dataset$`Music_effects`
+Anxiety <- dataset$Anxiety
+BPM <- dataset$BPM
+ 
+#tabela Anova
+modelo_anova <- aov(MusicEfects ~ Gender, data = dataset)
+resultado_anova <- summary(modelo_anova)
+print(resultado_anova)
+ 
+```
+ 
+A realização da tabela ANOVA resultou em um p-valor de 0,0188, o qual é inferior ao nosso nível de significância (alfa) estabelecido em 0,05. Consequentemente, dispomos de evidências estatísticas para rejeitar a hipótese nula, ou seja, a hipótese de que não existem diferenças significativas entre as médias dos gêneros analisados. Portanto, não podemos presumir que qualquer variação observada entre os gêneros seja simplesmente devido ao acaso; em vez disso, podemos afirmar que essa variação é atribuível a efeitos reais dos fatores estudados. Assumimos, portanto, que pelo menos um dos gêneros é significativamente diferente dos demais.
+
+Apesar do resultado do p-valor, tendo em vista que o valor do teste estatístico F foi relativamente modesto (1.922), optamos por <b>calcular o valor crítico f </b> como uma medida mais sólida para confirmar a rejeição da hipótese nula.
+ 
+```{r}
+# Defina o nível de significância alfa
+alfa <- 0.05
+ 
+# Graus de liberdade do numerador e do denominador
+df1 <- 15  # Graus de liberdade para "Gender"
+df2 <- 603 # Graus de liberdade para "Residuals"
+ 
+# Calcule o valor crítico F
+valor_critico_F <- qf(1 - alfa, df1, df2)
+ 
+# Imprima o valor crítico F
+print(valor_critico_F)
+```
+ 
+Dado que o valor do teste estatístico F calculado foi registrado em 1.922, superando o valor crítico de F (estabelecido em 1.682) para o nível de significância (alfa) previamente definido, bem como considerando que o valor de p associado ao teste foi inferior ao nível de significância estabelecido, podemos proceder com confiança à rejeição da hipótese nula.
+<h3>Conclusão Primária</h3>
+Os resultados indicam a rejeição da hipótese nula, uma vez que o valor-p (0,0188) é menor que o nível de significância (0,05) e o teste F calculado (1,922) supera o valor crítico F (1,682) para o mesmo nível de significância. Isso sugere que as diferenças entre os grupos não são devido ao acaso, sendo estatisticamente significativas. Pode-se, com confiança, afirmar que pelo menos um grupo se diferencia dos demais, enfatizando a importância desses valores na interpretação das relações analisadas. 
+<p>Contudo, ainda é necessário analisar os resíduos da regressão</p>
+
+<h2>Analisando os Resíduos</h2>
+ 
+Os resíduos de uma ANOVA são as diferenças entre os valores observados e os valores previstos por tal modelo estatístico. Nesse modelo, os resíduos devem se comportar de acordo com algumas suposições como normalidade e homoscedasticidade.
+
+<p><b>Normalidade:</b></p>
+Os resíduos devem seguir uma distribuição normal, ou seja, os valores dos resíduos devem ser distribuídos de forma simétrica em torno de zero. Se os resíduos não forem aproximadamente normais, a validade das conclusões da ANOVA. podem ser afetados.
+```{r}
+residuos <- resid(modelo_anova)
+hist(residuos)
+```
+<p>O histograma consiste em um gráfico de barras com o eixo x representando os valores dos resíduos e o eixo y representando a frêquencia desses resíduos em cada intervalo. Ao análisá-lo é possivel perceber que não se trata de uma distribuição normal, pois não se parece com curva de sino (distribuição normal).</p>
+ 
+```{r}
+qqnorm(residuos)
+```
+ 
+Essa outra análise denominada qqnorm (quantile-quantile normal plot) compara os quantis dos resíduos com os quantis teóricos de uma distribuição normal, sendo uma outra forma de determinar se os resíduos seguem uma distribuição normal. No eixo x são os quantis teóricos da distribuição normal, enquanto no eixo y, são os quantis dos resíduos. Caso os pontos no gráfico se aproximassem de uma linha reta, indicaria que os resíduos se ajustam a uma distribuição normal.
+
+<p><b>Homoscedasticidade</b></p>
+É o conceito de que erros têm variância comum. Como nossa amostra tem poucos dados e eles são restritos para 0, 1 e 2 no quesito Music effects, se torna mais complexo de fazer uma análise mais detalha. Entretanto considerando o cenário, há indícios da falta da homoscedasticidade (ou seja, as variâncias entre os grupos), porque tem tipos de música que abrange todos os cenários diferentes, outros apenas dois e o restantes apenas um.
+
+```{r}
+boxplot(MusicEfects~Gender)
+```
+<p>Analisando o boxplot da relação Genero e ansiedade, vemos que no geral todos os gêneros levaram à melhora do ouvinte no que tange a saúde mental, não relacionando a melhora ou piora a algum gênero específico.</p>
+
+<h3>Conclusão Final</h3>
+
+A despeito do resultado inesperado na análise dos resíduos na tabela ANOVA, os parâmetros estatísticos, notadamente o valor-p e o valor F, revelaram a possibilidade de gêneros musicais específicos contribuírem para a promoção da melhoria no quadro de ansiedade. No entanto, ao considerarmos a análise de boxplot e a avaliação dos resíduos, não se evidencia claramente um estilo musical específico que conduza a essa melhoria; ao invés disso, constata-se que a música de modo geral desempenhou um papel significativo no alívio da ansiedade.
